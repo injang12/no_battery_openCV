@@ -22,6 +22,36 @@ def load_and_undistort_image(path, mtx, dist):
     else:
         return img, None
 
+def refine_circle_with_edges(gray, init_center, roi_size=250):
+    cx, cy = init_center
+    h, w = gray.shape[:2]
+
+    # ROI 영역 계산
+    x0 = max(int(cx - roi_size), 0)
+    y0 = max(int(cy - roi_size), 0)
+    x1 = min(int(cx + roi_size), w)
+    y1 = min(int(cy + roi_size), h)
+
+    roi = gray[y0:y1, x0:x1]
+
+    # 에지 검출 (파라미터는 환경에 맞게 튜닝 필요)
+    edges = cv2.Canny(roi, 50, 150)
+
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    if not contours:
+        # 에지가 없으면 초기값 그대로 반환
+        return init_center
+
+    # 가장 큰 컨투어 사용 (원 외곽이라고 가정)
+    cnt = max(contours, key=cv2.contourArea)
+
+    # 최소 외접원 -> 서브픽셀 중심, 반경 얻기
+    (ref_cx, ref_cy), ref_r = cv2.minEnclosingCircle(cnt)
+
+    # ROI 좌표를 전체 이미지 좌표로 변환
+    refined_center = (x0 + ref_cx, y0 + ref_cy)
+
+    return refined_center
 
 # 주어진 이미지의 중앙 영역에서 원을 검출하고, 결과 이미지와 텍스트를 반환
 def detect_circle(image, pixel_per_mm, search_window_size, hough_params, approx_center):
@@ -33,19 +63,18 @@ def detect_circle(image, pixel_per_mm, search_window_size, hough_params, approx_
     result_data = None
 
     gray = cv2.cvtColor(processed_img, cv2.COLOR_BGR2GRAY)
-    # blurred = cv2.medianBlur(gray, 5)
     blurred = cv2.GaussianBlur(gray, (5, 5), 1.2)
 
     approx_center_x, approx_center_y = approx_center
 
     # HoughCircles를 전체 이미지에 대해 실행
     all_circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT,
-                                   dp=hough_params['dp'],
-                                   minDist=hough_params['minDist'],
-                                   param1=hough_params['param1'],
-                                   param2=hough_params['param2'],
-                                   minRadius=hough_params['minRadius'],
-                                   maxRadius=hough_params['maxRadius'])
+                                    dp=hough_params['dp'],
+                                    minDist=hough_params['minDist'],
+                                    param1=hough_params['param1'],
+                                    param2=hough_params['param2'],
+                                    minRadius=hough_params['minRadius'],
+                                    maxRadius=hough_params['maxRadius'])
 
     # 근사치 좌표에 마커 표시
     cv2.line(processed_img, (int(img_w / 2), 0), (int(img_w / 2), img_h), (0, 255, 255), 2)
@@ -55,14 +84,14 @@ def detect_circle(image, pixel_per_mm, search_window_size, hough_params, approx_
     result_text = "결과: 이미지에서 원을 찾을 수 없습니다."
 
     if all_circles is not None:
-        all_circles = np.uint16(np.around(all_circles))
+        all_circles = np.around(all_circles, 3)
         
         candidate_circles = []
-        half_window_size = search_window_size / 2
+        half_window_size = search_window_size / 2.0
 
         # 검색 창 내의 원들을 후보로 추가
         for circle in all_circles[0, :]:
-            center_x, center_y = int(circle[0]), int(circle[1])
+            center_x, center_y = circle[0], circle[1]
             if (abs(center_x - approx_center_x) < half_window_size and
                 abs(center_y - approx_center_y) < half_window_size):
                 candidate_circles.append(circle)
@@ -73,7 +102,7 @@ def detect_circle(image, pixel_per_mm, search_window_size, hough_params, approx_
 
             # 후보 원들 중에서 가장 가까운 원을 찾음
             for circle in candidate_circles:
-                center_x, center_y = int(circle[0]), int(circle[1])
+                center_x, center_y = circle[0], circle[1]
                 dist = np.sqrt((center_x - approx_center_x)**2 + (center_y - approx_center_y)**2)
                 
                 if dist < min_dist_to_approx:
@@ -82,24 +111,33 @@ def detect_circle(image, pixel_per_mm, search_window_size, hough_params, approx_
             
             if best_circle is not None:
                 precise_center_x, precise_center_y, precise_radius = best_circle
-                
-                cv2.circle(processed_img, (precise_center_x, precise_center_y), precise_radius, (0, 255, 0), 2)
-                cv2.circle(processed_img, (precise_center_x, precise_center_y), 5, (255, 0, 0), -1)
+                gray_img = gray
 
-                img_center_x, img_center_y = img_w // 2, img_h // 2
-                dx_pixels = int(precise_center_x) - int(img_center_x)
-                dy_pixels = int(precise_center_y) - int(img_center_y)
+                refined_center = refine_circle_with_edges(
+                    gray_img,
+                    (precise_center_x, precise_center_y),
+                    roi_size=250,
+                )
+
+                ref_cx, ref_cy = refined_center
+
+                cv2.circle(processed_img, (int(round(precise_center_x)), int(round(precise_center_y))), int(round(precise_radius)), (0, 255, 0), 2)
+                cv2.circle(processed_img, (int(round(precise_center_x)), int(round(precise_center_y))), 5, (255, 0, 0), -1)
+
+                img_center_x, img_center_y = img_w // 2.0, img_h // 2.0
+                dx_pixels = ref_cx - img_center_x
+                dy_pixels = ref_cy - img_center_y
                 dx_mm = dx_pixels * pixel_per_mm
-                dy_mm = dy_pixels * pixel_per_mm * (-1.0)
+                dy_mm = -dy_pixels * pixel_per_mm
 
                 result_text = (
                     f"Result:\n"
-                    f"  Precise Center: ({precise_center_x}, {precise_center_y})\n"
-                    f"  Radius: {precise_radius} pixels\n"
+                    f"  Precise Center: ({ref_cx:.3f}, {ref_cy:.3f})\n"
+                    f"  Radius: {precise_radius:.3f} pixels\n"
                     f"  Offset (mm): dx={dx_mm:.3f}, dy={dy_mm:.3f}"
                 )
                 result_data = {
-                    'center': (precise_center_x, precise_center_y),
+                    'center': (ref_cx, ref_cy),
                     'offset': (dx_mm, dy_mm),
                     'radius': precise_radius
                 }

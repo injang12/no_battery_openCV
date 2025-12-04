@@ -69,7 +69,7 @@ class LogManager:
             
             # f-string 포맷팅을 사용하여 소수점 3자리까지 표현
             formatted_line = (
-                f"[{time_str}] [{base_name}] Radius: {radius}, 좌표값: ({center_x:.3f}, {center_y:.3f}), "
+                f"[{time_str}] [{base_name}] Radius: {radius:.3f}, 좌표값: ({center_x:.3f}, {center_y:.3f}), "
                 f"offset(mm): dx={dx:.3f}, dy={dy:.3f}\n"
             )
 
