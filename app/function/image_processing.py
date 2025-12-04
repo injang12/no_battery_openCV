@@ -131,10 +131,9 @@ def detect_circle(image, pixel_per_mm, search_window_size, hough_params, approx_
                 dy_mm = -dy_pixels * pixel_per_mm
 
                 result_text = (
-                    f"Result:\n"
-                    f"  Precise Center: ({ref_cx:.3f}, {ref_cy:.3f})\n"
-                    f"  Radius: {precise_radius:.3f} pixels\n"
-                    f"  Offset (mm): dx={dx_mm:.3f}, dy={dy_mm:.3f}"
+                    f" Center: ({ref_cx:.3f}, {ref_cy:.3f})\n"
+                    f" Radius: {precise_radius:.1f}px\n"
+                    f" dx={dx_mm:.3f}mm, dy={dy_mm:.3f}mm"
                 )
                 result_data = {
                     'center': (float(ref_cx), float(ref_cy)),
