@@ -137,9 +137,9 @@ def detect_circle(image, pixel_per_mm, search_window_size, hough_params, approx_
                     f"  Offset (mm): dx={dx_mm:.3f}, dy={dy_mm:.3f}"
                 )
                 result_data = {
-                    'center': (ref_cx, ref_cy),
-                    'offset': (dx_mm, dy_mm),
-                    'radius': precise_radius
+                    'center': (float(ref_cx), float(ref_cy)),
+                    'offset': (float(dx_mm), float(dy_mm)),
+                    'radius': float(precise_radius)
                 }
         else:
             result_text = "결과: 검색 창 내에서 원을 찾을 수 없습니다."
