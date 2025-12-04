@@ -13,8 +13,6 @@ def save_result_to_file(result_data, image_path):
     try:
         # 결과 폴더 생성 (FastAPI main.py에서 이미 생성하므로 중복 방지)
         results_dir = "log"
-        # if not os.path.exists(results_dir):
-        #     os.makedirs(results_dir)
 
         # 파일 이름 생성 (년_월_일.txt)
         date_str = datetime.now().strftime("%Y_%m_%d")

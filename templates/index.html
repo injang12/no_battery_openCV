@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Circle Detector</title>
+    <title>원 검출기</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
         .main-wrapper { display: flex; height: 100%; }
@@ -13,23 +14,23 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .image-panel { display: flex; gap: 1rem; height: calc(100vh - 250px); }
-        .canvas-wrapper { border: 1px solid #dee2e6; border-radius: .375rem; padding: 0.5rem; flex: 1; min-height: 0; display: flex; flex-direction: column; }
-        .canvas-wrapper canvas { width: 100%; height: 100%; object-fit: contain; cursor: crosshair; }
+        .canvas-wrapper { border: 1px solid #dee2e6; border-radius: .375rem; padding: 0.5rem; flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;}
+        .canvas-wrapper canvas { max-width: 100%; max-height: 100%; cursor: crosshair; }
         .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .image-title { display: none; }
+        #calibration-log { height: 150px; white-space: pre-wrap; word-wrap: break-word; }
+        #calibration-canvas-wrapper { height: 50vh; }
     </style>
 </head>
 <body>
     <div class="main-wrapper">
         <!-- Sidebar -->
         <div class="sidebar">
-            <h3 class="mb-4">JLT</h3>
+            <h3 class="mb-4">원 검출기</h3>
             <ul class="nav nav-pills flex-column">
-                <li class="nav-item">
-                    <a class="nav-link active" href="#" data-tab="main-view">Main</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#" data-tab="param-view">Parameters</a>
-                </li>
+                <li class="nav-item"><a class="nav-link active" href="#" data-tab="main-view">메인</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" data-tab="param-view">파라미터</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" data-tab="calibration-view">캘리브레이션</a></li>
             </ul>
         </div>
 
@@ -40,41 +41,24 @@
                 <div id="main-view" class="tab-content active">
                     <div class="row">
                         <div class="col-md-2">
-                             <h5>1. 이미지 로드</h5>
+                            <h5>1. 이미지 로드</h5>
                             <input class="form-control mb-3" type="file" id="file" name="file" required>
-
                             <h5>2. 선택 좌표</h5>
                             <div class="param-grid mb-3">
-                                <div class="form-floating">
-                                    <input type="number" class="form-control" id="approx_x" name="approx_x" value="1820">
-                                    <label for="approx_x">X</label>
-                                </div>
-                                <div class="form-floating">
-                                    <input type="number" class="form-control" id="approx_y" name="approx_y" value="760">
-                                    <label for="approx_y">Y</label>
-                                </div>
+                                <div class="form-floating"><input type="number" class="form-control" id="approx_x" name="approx_x" value="1820"><label for="approx_x">X</label></div>
+                                <div class="form-floating"><input type="number" class="form-control" id="approx_y" name="approx_y" value="760"><label for="approx_y">Y</label></div>
                             </div>
-                            
-                            <button type="submit" class="btn btn-primary w-100 mb-3">Run</button>
-
+                            <button type="submit" class="btn btn-primary w-100 mb-3">실행</button>
                             <div id="result-container">
-                                <h5>Result</h5>
-                                <div id="spinner" class="spinner-border" role="status" style="display: none;">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
+                                <h5>결과</h5>
+                                <div id="spinner" class="spinner-border" role="status" style="display: none;"><span class="visually-hidden">로딩 중...</span></div>
                                 <pre id="result-text" class="mt-2 small bg-light p-2 rounded"></pre>
                             </div>
                         </div>
                         <div class="col-md-10">
                             <div class="image-panel">
-                                <div class="canvas-wrapper">
-                                    <h6>Original Image</h6>
-                                    <canvas id="original-canvas"></canvas>
-                                </div>
-                                <div class="canvas-wrapper">
-                                    <h6>Processed Image</h6>
-                                    <canvas id="processed-canvas"></canvas>
-                                </div>
+                                <div class="canvas-wrapper"><h6 id="original-image-title" class="image-title"></h6><canvas id="original-canvas"></canvas></div>
+                                <div class="canvas-wrapper"><h6 id="processed-image-title" class="image-title"></h6><canvas id="processed-canvas"></canvas></div>
                             </div>
                         </div>
                     </div>
@@ -82,31 +66,58 @@
 
                 <!-- Parameters Tab Content -->
                 <div id="param-view" class="tab-content">
-                    <h4>Detection Parameters</h4>
+                    <h4>검출 파라미터</h4>
                     <hr>
                     <div class="mb-4">
-                        <h6>General Parameters</h6>
-                         <div class="param-grid mt-3">
-                            <div class="form-floating">
-                                <input type="number" class="form-control" id="pixel_per_mm" name="pixel_per_mm" value="0.117" step="any">
-                                <label for="pixel_per_mm">Pixel per MM</label>
-                            </div>
-                            <div class="form-floating">
-                                <input type="number" class="form-control" id="window_size" name="window_size" value="250">
-                                <label for="window_size">Window Size</label>
+                        <h6>일반 파라미터</h6>
+                        <div class="param-grid mt-3">
+                            <div class="form-floating"><input type="number" class="form-control" id="pixel_per_mm" name="pixel_per_mm" value="0.117" step="any"><label for="pixel_per_mm">픽셀 당 mm 수</label></div>
+                            <div class="form-floating"><input type="number" class="form-control" id="window_size" name="window_size" value="250"><label for="window_size">탐색 윈도우 크기</label></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h6>허프 변환 파라미터</h6>
+                        <div class="param-grid mt-3">
+                            <div class="form-floating"><input type="number" class="form-control" id="h_dp" name="h_dp" value="1" step="any"><label for="h_dp" data-bs-toggle="tooltip" title="이미지 해상도와 Hough 공간 해상도의 반비례 관계 (값이 클수록 검출 속도는 빠르지만, 정확도가 떨어질 수 있음)">해상도 반전율 (dp)</label></div>
+                            <div class="form-floating"><input type="number" class="form-control" id="h_min_dist" name="h_min_dist" value="75"><label for="h_min_dist" data-bs-toggle="tooltip" title="검출된 원의 중심점들 간의 최소 거리 (픽셀 단위)">중심점 최소 거리 (minDist)</label></div>
+                            <div class="form-floating"><input type="number" class="form-control" id="h_param1" name="h_param1" value="110"><label for="h_param1" data-bs-toggle="tooltip" title="캐니 엣지 검출기의 높은 임계값 (param2는 낮은 임계값으로 사용)">캐니 엣지 상위 임계값 (param1)</label></div>
+                            <div class="form-floating"><input type="number" class="form-control" id="h_param2" name="h_param2" value="20"><label for="h_param2" data-bs-toggle="tooltip" title="Hough 축적기의 임계값 (값이 작을수록 가짜 원 증가, 클수록 정확한 원 검출)">축적기 임계값 (param2)</label></div>
+                            <div class="form-floating"><input type="number" class="form-control" id="h_min_radius" name="h_min_radius" value="125"><label for="h_min_radius" data-bs-toggle="tooltip" title="검출할 원의 최소 반지름 (픽셀 단위)">최소 반지름 (minRadius)</label></div>
+                            <div class="form-floating"><input type="number" class="form-control" id="h_max_radius" name="h_max_radius" value="135"><label for="h_max_radius" data-bs-toggle="tooltip" title="검출할 원의 최대 반지름 (픽셀 단위)">최대 반지름 (maxRadius)</label></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Calibration Tab Content -->
+                <div id="calibration-view" class="tab-content">
+                    <h4>캘리브레이션</h4>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <button type="button" id="run-calibration-btn" class="btn btn-success w-100 mb-3">캘리브레이션 실행</button>
+                            <h6>진행 상태</h6>
+                            <div class="progress mb-3" role="progressbar"><div id="calibration-progress" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%">0%</div></div>
+                            <h6>로그</h6>
+                            <pre id="calibration-log" class="bg-light p-2 rounded small"></pre>
+                        </div>
+                        <div class="col-md-8">
+                            <div id="calibration-canvas-wrapper" class="canvas-wrapper">
+                                <h6> </h6>
+                                <canvas id="calibration-canvas"></canvas>
                             </div>
                         </div>
                     </div>
-                   
-                    <div>
-                        <h6>HoughCircles Parameters</h6>
-                        <div class="param-grid mt-3">
-                            <div class="form-floating"><input type="number" class="form-control" id="h_dp" name="h_dp" value="1" step="any"><label for="h_dp">dp</label></div>
-                            <div class="form-floating"><input type="number" class="form-control" id="h_min_dist" name="h_min_dist" value="75"><label for="h_min_dist">minDist</label></div>
-                            <div class="form-floating"><input type="number" class="form-control" id="h_param1" name="h_param1" value="110"><label for="h_param1">param1</label></div>
-                            <div class="form-floating"><input type="number" class="form-control" id="h_param2" name="h_param2" value="20"><label for="h_param2">param2</label></div>
-                            <div class="form-floating"><input type="number" class="form-control" id="h_min_radius" name="h_min_radius" value="125"><label for="h_min_radius">minRadius</label></div>
-                            <div class="form-floating"><input type="number" class="form-control" id="h_max_radius" name="h_max_radius" value="135"><label for="h_max_radius">maxRadius</label></div>
+                    <hr>
+                    <h5>현재 데이터</h5>
+                    <button type="button" id="load-calib-data-btn" class="btn btn-secondary mb-3">현재 데이터 불러오기</button>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>카메라 행렬 (mtx)</h6>
+                            <pre id="calib-matrix-data" class="bg-light p-2 rounded small"></pre>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>왜곡 계수 (dist)</h6>
+                            <pre id="calib-dist-data" class="bg-light p-2 rounded small"></pre>
                         </div>
                     </div>
                 </div>
@@ -115,106 +126,107 @@
     </div>
 
     <script>
-        // --- Tab Switching ---
+        // Bootstrap 툴팁 초기화
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) { return new bootstrap.Tooltip(tooltipTriggerEl) })
+        });
+
+        // --- 탭 전환 로직 ---
         const navLinks = document.querySelectorAll('.sidebar .nav-link');
         const tabContents = document.querySelectorAll('.tab-content');
+        let calibrationDataLoaded = false;
 
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const targetId = link.getAttribute('data-tab');
-
                 navLinks.forEach(navLink => navLink.classList.remove('active'));
                 link.classList.add('active');
+                tabContents.forEach(content => { content.classList.toggle('active', content.id === targetId); });
 
-                tabContents.forEach(content => {
-                    if (content.id === targetId) {
-                        content.classList.add('active');
-                    } else {
-                        content.classList.remove('active');
-                    }
-                });
+                if (targetId === 'calibration-view' && !calibrationDataLoaded) {
+                    loadCalibDataBtn.click();
+                    calibrationDataLoaded = true;
+                }
             });
         });
 
-        // --- DOM Elements ---
+        // --- DOM 요소 ---
         const form = document.getElementById('upload-form');
         const fileInput = document.getElementById('file');
         const approxXInput = document.getElementById('approx_x');
         const approxYInput = document.getElementById('approx_y');
-        
         const originalCanvas = document.getElementById('original-canvas');
         const originalCtx = originalCanvas.getContext('2d');
+        const originalTitle = document.getElementById('original-image-title');
         const processedCanvas = document.getElementById('processed-canvas');
         const processedCtx = processedCanvas.getContext('2d');
-
+        const processedTitle = document.getElementById('processed-image-title');
         const resultText = document.getElementById('result-text');
         const spinner = document.getElementById('spinner');
+        const loadCalibDataBtn = document.getElementById('load-calib-data-btn');
+        const calibMatrixData = document.getElementById('calib-matrix-data');
+        const calibDistData = document.getElementById('calib-dist-data');
+        const runCalibrationBtn = document.getElementById('run-calibration-btn');
+        const calibProgress = document.getElementById('calibration-progress');
+        const calibLog = document.getElementById('calibration-log');
+        const calibCanvas = document.getElementById('calibration-canvas');
+        const calibCtx = calibCanvas.getContext('2d');
 
-        // --- State ---
+        // --- 상태 변수 ---
         let originalImage = null;
         let currentApprox = { x: null, y: null };
-
-        // --- Drawing Functions ---
-        function drawImageOnCanvas(canvas, ctx, image, callback) {
-            const wrapper = canvas.parentElement;
-            let { width: wrapperWidth, height: wrapperHeight } = wrapper.getBoundingClientRect();
-            wrapperHeight -= 30; // Adjust for h6 title
-
-            const imgRatio = image.naturalWidth / image.naturalHeight;
-            const wrapperRatio = wrapperWidth / wrapperHeight;
-
-            let canvasWidth, canvasHeight;
-            if (imgRatio > wrapperRatio) {
-                canvasWidth = wrapperWidth;
-                canvasHeight = wrapperWidth / imgRatio;
-            } else {
-                canvasHeight = wrapperHeight;
-                canvasWidth = wrapperHeight * imgRatio;
+        
+        // --- 그리기 함수 ---
+        function drawOriginalImage() {
+            if (!originalImage) return; 
+            originalCanvas.width = originalImage.naturalWidth;
+            originalCanvas.height = originalImage.naturalHeight;
+            originalCtx.drawImage(originalImage, 0, 0);
+            if (currentApprox.x !== null) {
+                originalCtx.strokeStyle = '#ff0000';
+                originalCtx.lineWidth = Math.max(2, originalCanvas.width / 500);
+                originalCtx.beginPath();
+                originalCtx.moveTo(currentApprox.x - 20, currentApprox.y);
+                originalCtx.lineTo(currentApprox.x + 20, currentApprox.y);
+                originalCtx.moveTo(currentApprox.x, currentApprox.y - 20);
+                originalCtx.lineTo(currentApprox.x, currentApprox.y + 20);
+                originalCtx.stroke();
             }
-            
-            canvas.width = canvasWidth;
-            canvas.height = canvasHeight;
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-            if (callback) callback();
-        }
-
-        function drawMarker() {
-            if (!originalImage || currentApprox.x === null) return;
-
-            const scaleX = originalCanvas.width / originalImage.naturalWidth;
-            const scaleY = originalCanvas.height / originalImage.naturalHeight;
-            const markerX = currentApprox.x * scaleX;
-            const markerY = currentApprox.y * scaleY;
-            
-            originalCtx.strokeStyle = '#ff0000';
-            originalCtx.lineWidth = 1;
-            originalCtx.beginPath();
-            originalCtx.moveTo(markerX - 10, markerY);
-            originalCtx.lineTo(markerX + 10, markerY);
-            originalCtx.moveTo(markerX, markerY - 10);
-            originalCtx.lineTo(markerX, markerY + 10);
-            originalCtx.stroke();
         }
         
-        function redrawOriginalCanvas() {
-            if (!originalImage) return;
-            drawImageOnCanvas(originalCanvas, originalCtx, originalImage, drawMarker);
+        // --- 캘리브레이션 데이터 포맷팅 함수 ---
+        function formatMatrixData(matrix) {
+            if (!matrix || matrix.length === 0) return "사용 가능한 데이터 없음.";
+            let formatted = "[";
+            matrix.forEach(row => { formatted += "  [ " + row.map(num => num.toFixed(5).padStart(10, ' ')).join(", ") + " ],\n"; });
+            formatted = formatted.slice(0, -2) + "\n]";
+            return formatted;
+        }
+        function formatDistortionData(distortion) {
+            if (!distortion || distortion.length === 0 || distortion[0].length === 0) return "사용 가능한 데이터 없음.";
+            const distCoeffs = distortion[0];
+            return "[ " + distCoeffs.map(num => num.toFixed(5).padStart(10, ' ')).join(", ") + " ]";
         }
 
-        // --- Event Handlers ---
+        // --- 이벤트 핸들러 ---
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
+            processedCtx.clearRect(0, 0, processedCanvas.width, processedCanvas.height);
+            resultText.textContent = '';
             const reader = new FileReader();
             reader.onload = (event) => {
                 originalImage = new Image();
                 originalImage.onload = () => {
-                    currentApprox.x = approxXInput.value;
-                    currentApprox.y = approxYInput.value;
-                    redrawOriginalCanvas();
+                    originalTitle.innerText = '원본 이미지';
+                    processedTitle.innerText = '결과 이미지';
+                    originalTitle.style.display = 'block';
+                    processedTitle.style.display = 'block';
+                    currentApprox.x = parseInt(approxXInput.value);
+                    currentApprox.y = parseInt(approxYInput.value);
+                    drawOriginalImage();
                 };
                 originalImage.src = event.target.result;
             };
@@ -226,23 +238,22 @@
             const rect = originalCanvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            const scaleX = originalImage.naturalWidth / originalCanvas.width;
-            const scaleY = originalImage.naturalHeight / originalCanvas.height;
+            const scaleX = originalCanvas.width / rect.width;
+            const scaleY = originalCanvas.height / rect.height;
             const imageX = Math.round(x * scaleX);
             const imageY = Math.round(y * scaleY);
-            
             approxXInput.value = imageX;
             approxYInput.value = imageY;
             currentApprox.x = imageX;
             currentApprox.y = imageY;
-            redrawOriginalCanvas();
+            drawOriginalImage();
         });
         
         [approxXInput, approxYInput].forEach(input => {
             input.addEventListener('change', () => {
-                currentApprox.x = approxXInput.value;
-                currentApprox.y = approxYInput.value;
-                redrawOriginalCanvas();
+                currentApprox.x = parseInt(approxXInput.value);
+                currentApprox.y = parseInt(approxYInput.value);
+                drawOriginalImage();
             });
         });
 
@@ -252,28 +263,97 @@
             resultText.textContent = '';
             processedCtx.clearRect(0, 0, processedCanvas.width, processedCanvas.height);
             const formData = new FormData(form);
-            
             try {
                 const response = await fetch('/process-image/', { method: 'POST', body: formData });
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.detail || 'Something went wrong');
+                    throw new Error(errorData.detail || '알 수 없는 오류가 발생했습니다.');
                 }
                 const data = await response.json();
                 resultText.textContent = data.result_text;
                 const processedImage = new Image();
                 processedImage.onload = () => {
-                    drawImageOnCanvas(processedCanvas, processedCtx, processedImage);
+                    processedCanvas.width = processedImage.naturalWidth;
+                    processedCanvas.height = processedImage.naturalHeight;
+                    processedCtx.drawImage(processedImage, 0, 0);
                 };
                 processedImage.src = "data:image/jpeg;base64," + data.processed_image_b64;
             } catch (error) {
-                resultText.textContent = `Error: ${error.message}`;
+                resultText.textContent = `오류: ${error.message}`;
             } finally {
                 spinner.style.display = 'none';
             }
         });
-        
-        new ResizeObserver(redrawOriginalCanvas).observe(originalCanvas.parentElement);
+
+        loadCalibDataBtn.addEventListener('click', async () => {
+            calibMatrixData.textContent = '로딩 중...';
+            calibDistData.textContent = '';
+            try {
+                const response = await fetch('/calibration-data');
+                if (!response.ok) { throw new Error((await response.json()).detail || '데이터 로드 실패'); }
+                const data = await response.json();
+                calibMatrixData.textContent = formatMatrixData(data.matrix);
+                calibDistData.textContent = formatDistortionData(data.distortion);
+            } catch (error) {
+                calibMatrixData.textContent = `오류: ${error.message}`;
+            }
+        });
+
+        runCalibrationBtn.addEventListener('click', () => {
+            calibLog.textContent = '';
+            calibProgress.style.width = '0%';
+            calibProgress.textContent = '0%';
+            calibProgress.classList.remove('bg-success', 'bg-danger');
+            runCalibrationBtn.disabled = true;
+
+            const ws = new WebSocket(`ws://${window.location.host}/ws/run-calibration`);
+
+            ws.onopen = () => {
+                
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                // 로그 메시지 추가
+                if(data.message) {
+                    calibLog.textContent += data.message + '\n';
+                    calibLog.scrollTop = calibLog.scrollHeight; // 자동 스크롤
+                }
+
+                if (data.type === 'progress') {
+                    // 프로그레스 바 업데이트
+                    const percent = (data.current / data.total) * 100;
+                    calibProgress.style.width = `${percent}%`;
+                    calibProgress.textContent = `${Math.round(percent)}%`;
+
+                    // 이미지 캔버스 업데이트
+                    const calibImage = new Image();
+                    calibImage.onload = () => {
+                        calibCanvas.width = calibImage.naturalWidth;
+                        calibCanvas.height = calibImage.naturalHeight;
+                        calibCtx.drawImage(calibImage, 0, 0);
+                    };
+                    calibImage.src = "data:image/jpeg;base64," + data.image;
+                } else if (data.type === 'success') {
+                    calibProgress.classList.add('bg-success');
+                    calibProgress.textContent = '완료!';
+                    loadCalibDataBtn.click(); // 성공 후 데이터 자동 갱신
+                } else if (data.type === 'error') {
+                    calibProgress.classList.add('bg-danger');
+                    calibProgress.textContent = '오류!';
+                }
+            };
+
+            ws.onerror = (event) => {
+                calibLog.textContent += '웹소켓 오류 발생.\n';
+                runCalibrationBtn.disabled = false;
+            };
+
+            ws.onclose = (event) => {
+                runCalibrationBtn.disabled = false;
+            };
+        });
     </script>
 </body>
 </html>

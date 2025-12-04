@@ -1,15 +1,24 @@
 import os
 import glob
+import re
 
 import cv2
 import numpy as np
 
+# 자연스러운 숫자 정렬을 위한 키 함수
+def natural_sort_key(s):
+    """문자열 내 숫자를 기준으로 자연스러운 정렬을 위한 키를 생성합니다."""
+    return [int(text) if text.isdigit() else text.lower()
+            for text in re.split('([0-9]+)', s)]
 
 # 캘리브레이션 프로세스를 준비
 def prepare_calibration(image_path_pattern='app/calibration/cali_images/*.jpg'):
     images = glob.glob(image_path_pattern)
+    # 이미지 목록을 자연스러운 순서로 정렬합니다.
+    images = sorted(images, key=natural_sort_key) 
+
     if not images:
-        return None, None, f"'{image_path_pattern}' 경로에서 이미지를 찾을 수 없습니다."
+        return None, None, None, f"'{image_path_pattern}' 경로에서 이미지를 찾을 수 없습니다."
 
     checkerboard_size = (14, 12)
     objp = np.zeros((checkerboard_size[0] * checkerboard_size[1], 3), np.float32)
@@ -55,7 +64,7 @@ def finalize_and_save_calibration(objpoints, imgpoints, image_size, output_file=
 
     try:
         np.savez(output_file, mtx=mtx, dist=dist)
-        return True, f"캘리브레이션 성공! 데이터가 {output_file}에 저장되었습니다.", "success"
+        return True, f"캘리브레이션 성공!\n데이터가 {output_file}에 저장되었습니다.", "success"
     except Exception as e:
         return False, f"캘리브레이션 데이터를 저장할 수 없습니다: {e}", "error"
 

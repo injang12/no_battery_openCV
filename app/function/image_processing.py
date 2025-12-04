@@ -23,6 +23,10 @@ def load_and_undistort_image(path, mtx, dist):
         return img, None
 
 def refine_circle_with_edges(gray, init_center, roi_size=250):
+    """
+    HoughCircles로 찾은 초기 중심점 주변의 ROI에서 Canny 에지를 찾고,
+    가장 큰 컨투어에 대한 최소 외접원을 계산하여 중심점을 더 정밀하게 보정합니다.
+    """
     cx, cy = init_center
     h, w = gray.shape[:2]
 
@@ -131,9 +135,10 @@ def detect_circle(image, pixel_per_mm, search_window_size, hough_params, approx_
                 dy_mm = -dy_pixels * pixel_per_mm
 
                 result_text = (
-                    f" Center: ({ref_cx:.3f}, {ref_cy:.3f})\n"
-                    f" Radius: {precise_radius:.1f}px\n"
-                    f" dx={dx_mm:.3f}mm, dy={dy_mm:.3f}mm"
+                    f" 중심점: ({ref_cx:.3f}, {ref_cy:.3f})\n"
+                    f" 반지름: {precise_radius:.1f}px\n"
+                    f" dx={dx_mm:.3f}mm\n"
+                    f" dy={dy_mm:.3f}mm"
                 )
                 result_data = {
                     'center': (float(ref_cx), float(ref_cy)),
@@ -141,6 +146,6 @@ def detect_circle(image, pixel_per_mm, search_window_size, hough_params, approx_
                     'radius': float(precise_radius)
                 }
         else:
-            result_text = "결과: 검색 창 내에서 원을 찾을 수 없습니다."
+            result_text = "결과: 검색 창 내에서 원을 찾을 수\n없습니다."
             
     return processed_img, result_text, result_data
