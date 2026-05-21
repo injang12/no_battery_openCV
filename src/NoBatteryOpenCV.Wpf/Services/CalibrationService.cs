@@ -14,8 +14,15 @@ public sealed class CalibrationService
 
     public async Task<CalibrationRunResult> RunAsync(
         IProgress<CalibrationProgress>? progress,
+        int cornerColumns,
+        int cornerRows,
         CancellationToken cancellationToken = default)
     {
+        if (cornerColumns < 2 || cornerRows < 2)
+        {
+            return new CalibrationRunResult(false, "체커보드 내부 코너 수는 가로/세로 모두 2 이상이어야 합니다.", null);
+        }
+
         var images = _calibrationStore.GetCalibrationImages();
         if (images.Count == 0)
         {
@@ -25,7 +32,7 @@ public sealed class CalibrationService
                 null);
         }
 
-        var checkerboardSize = new Size(14, 12);
+        var checkerboardSize = new Size(cornerColumns, cornerRows);
         var objectPointTemplate = CreateObjectPoints(checkerboardSize);
         var objectPoints = new List<Point3f[]>();
         var imagePoints = new List<Point2f[]>();

@@ -245,7 +245,9 @@ public partial class MainWindow : Window
 
         try
         {
-            var result = await Task.Run(() => _calibrationService.RunAsync(progress));
+            var cornerColumns = ReadInt(CheckerboardColumnsBox, "체커보드 가로 내부 코너 수");
+            var cornerRows = ReadInt(CheckerboardRowsBox, "체커보드 세로 내부 코너 수");
+            var result = await Task.Run(() => _calibrationService.RunAsync(progress, cornerColumns, cornerRows));
             AppendCalibrationLog(result.Message);
 
             if (result.Success)
@@ -483,6 +485,8 @@ public partial class MainWindow : Window
         LoadCalibrationButton.IsEnabled = !isBusy;
         SelectCalibrationFolderButton.IsEnabled = !isBusy;
         SaveCalibrationNpzButton.IsEnabled = !isBusy;
+        CheckerboardColumnsBox.IsEnabled = !isBusy;
+        CheckerboardRowsBox.IsEnabled = !isBusy;
 
         if (message is not null)
         {

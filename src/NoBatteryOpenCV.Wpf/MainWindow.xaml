@@ -256,6 +256,22 @@
                                        Foreground="#4B5563"
                                        FontSize="12"
                                        Margin="0,4,0,12" />
+                            <TextBlock Text="체커보드 내부 코너 수" Style="{StaticResource SectionTitle}" />
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="가로" Style="{StaticResource LabelText}" />
+                                    <TextBox x:Name="CheckerboardColumnsBox" Text="8" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="세로" Style="{StaticResource LabelText}" />
+                                    <TextBox x:Name="CheckerboardRowsBox" Text="8" />
+                                </StackPanel>
+                            </Grid>
                             <Button x:Name="RunCalibrationButton"
                                     Content="캘리브레이션 실행"
                                     Click="RunCalibrationButton_Click"
