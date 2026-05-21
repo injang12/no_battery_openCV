@@ -9,7 +9,7 @@
     <AssemblyName>CameraCalibration</AssemblyName>
     <RootNamespace>NoBatteryOpenCV.Wpf</RootNamespace>
     <Version>1.0.0</Version>
-    <Authors>최민규</Authors>
+    <Authors>InJang</Authors>
     <AssemblyTitle>Camera Calibration</AssemblyTitle>
     <Product>Camera Calibration</Product>
     <Description>Personal desktop WPF camera calibration and verification application using OpenCV.</Description>

@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Camera Calibration - 최민규 개인용"
+        Title="Camera Calibration"
         Icon="Assets/app.ico"
         Height="820"
         MinHeight="720"
@@ -58,7 +58,7 @@
                                FontSize="22"
                                FontWeight="SemiBold"
                                Foreground="White" />
-                    <TextBlock Text="최민규 개인용 프로그램 · 카메라 캘리브레이션 및 검증용 원 검출"
+                    <TextBlock Text="최민규 개인 프로그램"
                                Foreground="#C8D2E5"
                                Margin="0,2,0,0" />
                 </StackPanel>
