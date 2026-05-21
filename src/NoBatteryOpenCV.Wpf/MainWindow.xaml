@@ -1,0 +1,365 @@
+<Window x:Class="NoBatteryOpenCV.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Camera Calibration - 최민규 개인용"
+        Icon="Assets/app.ico"
+        Height="820"
+        MinHeight="720"
+        Width="1500"
+        MinWidth="1320"
+        Background="#F5F7FA">
+    <Window.Resources>
+        <SolidColorBrush x:Key="PanelBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="BorderBrushSoft" Color="#D8DEE8" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#2457C5" />
+        <Style TargetType="Button">
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="14,6" />
+            <Setter Property="Margin" Value="0,4,8,4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="7,4" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="LabelText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="#536173" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#1F2937" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+        <Style x:Key="PanelBorder" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="14" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel LastChildFill="True">
+        <Border DockPanel.Dock="Top" Background="#172033" Padding="18,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Camera Calibration"
+                               FontSize="22"
+                               FontWeight="SemiBold"
+                               Foreground="White" />
+                    <TextBlock Text="최민규 개인용 프로그램 · 카메라 캘리브레이션 및 검증용 원 검출"
+                               Foreground="#C8D2E5"
+                               Margin="0,2,0,0" />
+                </StackPanel>
+                <TextBlock x:Name="StatusTextBlock"
+                           Grid.Column="1"
+                           Foreground="#DCE6F8"
+                           VerticalAlignment="Center"
+                           Text="준비됨" />
+            </Grid>
+        </Border>
+
+        <TabControl Margin="14" Background="Transparent">
+            <TabItem Header="검증">
+                <Grid Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="310" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Style="{StaticResource PanelBorder}" Margin="0,0,12,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <TextBlock Text="캘리브레이션 검증" Style="{StaticResource SectionTitle}" />
+                                <TextBlock Text="원 검출은 캘리브레이션이 잘 적용됐는지 확인하기 위한 검증 기능입니다."
+                                           TextWrapping="Wrap"
+                                           Foreground="#6B7280"
+                                           Margin="0,0,0,12" />
+                                <Button x:Name="LoadImageButton"
+                                        Content="이미지 선택"
+                                        Click="LoadImageButton_Click"
+                                        HorizontalAlignment="Left" />
+                                <TextBlock x:Name="SelectedFileTextBlock"
+                                           Text="선택된 파일 없음"
+                                           TextWrapping="Wrap"
+                                           Foreground="#4B5563"
+                                           Margin="0,4,0,16" />
+
+                                <TextBlock Text="선택 좌표" Style="{StaticResource SectionTitle}" />
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="X" Style="{StaticResource LabelText}" />
+                                        <TextBox x:Name="ApproxXBox"
+                                                 Text="1820"
+                                                 TextChanged="ApproxCoordinateBox_TextChanged" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Y" Style="{StaticResource LabelText}" />
+                                        <TextBox x:Name="ApproxYBox"
+                                                 Text="760"
+                                                 TextChanged="ApproxCoordinateBox_TextChanged" />
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock Text="원본 이미지를 클릭하면 좌표가 자동으로 입력됩니다."
+                                           TextWrapping="Wrap"
+                                           FontSize="12"
+                                           Foreground="#6B7280"
+                                           Margin="0,0,0,14" />
+
+                                <Button x:Name="RunDetectionButton"
+                                        Content="원 검출 실행"
+                                        Click="RunDetectionButton_Click"
+                                        HorizontalAlignment="Stretch"
+                                        Background="{StaticResource AccentBrush}"
+                                        Foreground="White" />
+                                <Button x:Name="OpenLogButton"
+                                        Content="로그 폴더 열기"
+                                        Click="OpenLogButton_Click"
+                                        HorizontalAlignment="Stretch" />
+
+                                <TextBlock Text="결과" Style="{StaticResource SectionTitle}" Margin="0,18,0,10" />
+                                <TextBox x:Name="ResultTextBox"
+                                         Height="150"
+                                         IsReadOnly="True"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         VerticalScrollBarVisibility="Auto" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+
+                    <Grid Grid.Column="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource PanelBorder}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="원본 이미지" Style="{StaticResource SectionTitle}" />
+                                <Border Grid.Row="1"
+                                        Background="#111827"
+                                        BorderBrush="#202A3A"
+                                        BorderThickness="1"
+                                        ClipToBounds="True">
+                                    <Image x:Name="OriginalImage"
+                                           Stretch="Uniform"
+                                           MouseLeftButtonDown="OriginalImage_MouseLeftButtonDown" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                        <Border Grid.Column="2" Style="{StaticResource PanelBorder}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="검출 결과" Style="{StaticResource SectionTitle}" />
+                                <Border Grid.Row="1"
+                                        Background="#111827"
+                                        BorderBrush="#202A3A"
+                                        BorderThickness="1"
+                                        ClipToBounds="True">
+                                    <Image x:Name="ProcessedImage" Stretch="Uniform" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="파라미터">
+                <ScrollViewer Margin="0,12,0,0" VerticalScrollBarVisibility="Auto">
+                    <Border Style="{StaticResource PanelBorder}" MaxWidth="820" HorizontalAlignment="Left">
+                        <StackPanel>
+                            <TextBlock Text="일반 파라미터" Style="{StaticResource SectionTitle}" />
+                            <UniformGrid Columns="2" Rows="1" Margin="0,0,0,18">
+                                <StackPanel Margin="0,0,12,0">
+                                    <TextBlock Text="픽셀 당 mm 수" Style="{StaticResource LabelText}" />
+                                    <TextBox x:Name="PixelPerMmBox" Text="0.117" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,12,0">
+                                    <TextBlock Text="탐색 윈도우 크기" Style="{StaticResource LabelText}" />
+                                    <TextBox x:Name="WindowSizeBox" Text="250" />
+                                </StackPanel>
+                            </UniformGrid>
+
+                            <TextBlock Text="HoughCircles 파라미터" Style="{StaticResource SectionTitle}" />
+                            <UniformGrid Columns="2" Rows="3">
+                                <StackPanel Margin="0,0,12,12">
+                                    <TextBlock Text="해상도 반전율 dp" Style="{StaticResource LabelText}" />
+                                    <TextBox x:Name="HDpBox" Text="1.0" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,12,12">
+                                    <TextBlock Text="중심점 최소 거리 minDist" Style="{StaticResource LabelText}" />
+                                    <TextBox x:Name="HMinDistBox" Text="75" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,12,12">
+                                    <TextBlock Text="캐니 엣지 상위 임계값 param1" Style="{StaticResource LabelText}" />
+                                    <TextBox x:Name="HParam1Box" Text="110" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,12,12">
+                                    <TextBlock Text="축적기 임계값 param2" Style="{StaticResource LabelText}" />
+                                    <TextBox x:Name="HParam2Box" Text="20" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,12,12">
+                                    <TextBlock Text="최소 반지름 minRadius" Style="{StaticResource LabelText}" />
+                                    <TextBox x:Name="HMinRadiusBox" Text="125" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,12,12">
+                                    <TextBlock Text="최대 반지름 maxRadius" Style="{StaticResource LabelText}" />
+                                    <TextBox x:Name="HMaxRadiusBox" Text="135" />
+                                </StackPanel>
+                            </UniformGrid>
+                        </StackPanel>
+                    </Border>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="캘리브레이션">
+                <Grid Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="360" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Style="{StaticResource PanelBorder}">
+                        <StackPanel>
+                            <TextBlock Text="캘리브레이션 실행" Style="{StaticResource SectionTitle}" />
+                            <Button x:Name="SelectCalibrationFolderButton"
+                                    Content="체커보드 이미지 폴더 선택"
+                                    Click="SelectCalibrationFolderButton_Click"
+                                    HorizontalAlignment="Stretch" />
+                            <TextBlock x:Name="CalibrationImageFolderText"
+                                       TextWrapping="Wrap"
+                                       Foreground="#4B5563"
+                                       FontSize="12"
+                                       Margin="0,4,0,12" />
+                            <Button x:Name="RunCalibrationButton"
+                                    Content="캘리브레이션 실행"
+                                    Click="RunCalibrationButton_Click"
+                                    HorizontalAlignment="Stretch" />
+                            <Button x:Name="LoadCalibrationButton"
+                                    Content="현재 데이터 불러오기"
+                                    Click="LoadCalibrationButton_Click"
+                                    HorizontalAlignment="Stretch" />
+                            <Button x:Name="SaveCalibrationNpzButton"
+                                    Content=".npz 저장하기"
+                                    Click="SaveCalibrationNpzButton_Click"
+                                    HorizontalAlignment="Stretch" />
+                            <ProgressBar x:Name="CalibrationProgressBar"
+                                         Height="18"
+                                         Minimum="0"
+                                         Maximum="100"
+                                         Margin="0,12,0,4" />
+                            <TextBlock x:Name="CalibrationProgressText"
+                                       Text="0%"
+                                       Foreground="#4B5563"
+                                       Margin="0,0,0,12" />
+                            <TextBlock Text="로그" Style="{StaticResource SectionTitle}" />
+                            <TextBox x:Name="CalibrationLogBox"
+                                     Height="230"
+                                     IsReadOnly="True"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     VerticalScrollBarVisibility="Auto" />
+                            <TextBlock x:Name="CalibrationPathText"
+                                       TextWrapping="Wrap"
+                                       Foreground="#6B7280"
+                                       FontSize="12"
+                                       Margin="0,12,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="12" />
+                            <RowDefinition Height="260" />
+                        </Grid.RowDefinitions>
+
+                        <Border Style="{StaticResource PanelBorder}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="처리 이미지" Style="{StaticResource SectionTitle}" />
+                                <Border Grid.Row="1"
+                                        Background="#111827"
+                                        BorderBrush="#202A3A"
+                                        BorderThickness="1"
+                                        ClipToBounds="True">
+                                    <Image x:Name="CalibrationImage" Stretch="Uniform" />
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Border Style="{StaticResource PanelBorder}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Text="카메라 행렬" Style="{StaticResource SectionTitle}" />
+                                    <TextBox x:Name="MatrixTextBox"
+                                             Grid.Row="1"
+                                             FontFamily="Consolas"
+                                             FontSize="12"
+                                             IsReadOnly="True"
+                                             AcceptsReturn="True"
+                                             HorizontalScrollBarVisibility="Auto"
+                                             VerticalScrollBarVisibility="Auto" />
+                                </Grid>
+                            </Border>
+                            <Border Grid.Column="2" Style="{StaticResource PanelBorder}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Text="왜곡 계수" Style="{StaticResource SectionTitle}" />
+                                    <TextBox x:Name="DistortionTextBox"
+                                             Grid.Row="1"
+                                             FontFamily="Consolas"
+                                             FontSize="12"
+                                             IsReadOnly="True"
+                                             AcceptsReturn="True"
+                                             HorizontalScrollBarVisibility="Auto"
+                                             VerticalScrollBarVisibility="Auto" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

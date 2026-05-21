@@ -2,3 +2,9 @@ __pycache__
 .venv/
 log/
 test/
+bin/
+obj/
+.vs/
+.tools/
+artifacts/
+*.user
